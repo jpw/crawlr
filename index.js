@@ -1,8 +1,9 @@
 'use strict';
 
+const url = require('url');
 const puppeteer = require('puppeteer');
 
-const urlToLoad = 'https://nature.com/';
+const inputUrl = 'https://www.nature.com/';
 
 // these must be lower case
 const unloadedResourceTypes = [
@@ -14,6 +15,15 @@ const unloadedResourceTypes = [
 let requestUrls = [];
 let responseUrls = [];
 let mainUrlStatus = 'NOT 200';
+let parsedInputUrl;
+
+try {
+	parsedInputUrl = new URL(inputUrl);
+} catch (error) {
+	console.error(error);
+	process.exit(9); // Invalid Argument
+}
+
 
 // https://pptr.dev/#?product=Puppeteer&version=v3.0.4&show=api-class-puppeteer
 async function run() {
@@ -44,14 +54,16 @@ async function run() {
 		const url = request.url();
 		responseUrls.push(response.url());
 		const status = response.status();
-		if (url === urlToLoad) {
+		if (url === inputUrl) {
 			mainUrlStatus = status;
 		}
 	});
 
-	await page.goto(urlToLoad);
+	await page.goto(inputUrl);
 	console.log('status for main url:', mainUrlStatus);
 	await page.content();
+	const hrefs = await page.$$eval('a', links => links.map(a => a.href));
+	console.log(hrefs);
 	await browser.close();
 	console.warn(requestUrls.length)
 	console.warn(responseUrls.length)
