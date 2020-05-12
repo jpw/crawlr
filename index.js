@@ -1,7 +1,11 @@
 'use strict';
 
-const url = require('url');
 const puppeteer = require('puppeteer');
+
+const initialiser = require('./modules/initialiser');
+const crawler = require('./modules/crawler');
+const parser = require('./modules/parser');
+const reporter = require('./modules/reporter');
 
 const inputUrl = 'https://www.nature.com/';
 
@@ -15,14 +19,14 @@ const unloadedResourceTypes = [
 let requestUrls = [];
 let responseUrls = [];
 let mainUrlStatus = 'NOT 200';
-let parsedInputUrl;
 
 try {
-	parsedInputUrl = new URL(inputUrl);
+	const parsedInputUrl = initialiser.parseInput(inputUrl);
 } catch (error) {
-	console.error(error);
-	process.exit(9); // Invalid Argument
+	reporter.report(error)
+	process.exit(9); // 9 = Invalid Argument
 }
+
 
 
 // https://pptr.dev/#?product=Puppeteer&version=v3.0.4&show=api-class-puppeteer
@@ -46,7 +50,7 @@ async function run() {
 	});
 
 	page.on('requestfailed', request => {
-		// do nothing -- aborting requests (above) will result in failures
+		// aborting requests (above) will result in failures
 	});
 
 	page.on('response', response => {
