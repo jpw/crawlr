@@ -14,7 +14,7 @@ const unloadedResourceTypes = [
 ];
 
 let requestedUrls = [];
-let rootUrlStatus = 'NOT 200';
+let rootUrlStatus;
 let urlsToCrawl = new Set();
 
 const doCrawl = async () => {
@@ -51,9 +51,13 @@ const doCrawl = async () => {
 		let parsedUrl;
 		try {
 			parsedUrl = new URL(thisUrl);
-			if (parsedUrl.href === rootUrl.href) {
+			const status = response.status();
+			if (parsedUrl.href === rootUrl.href
+					&& (status < 300 || status >= 400)
+				)
+			{
 				requestedUrls.push(parsedUrl);
-				rootUrlStatus = response.status();
+				rootUrlStatus = status;
 			}
 		} catch (error) {
 			// invalid URL found
@@ -62,7 +66,6 @@ const doCrawl = async () => {
 	});
 
 	await page.goto(rootUrl);
-	console.log('status for main url:', rootUrlStatus);
 	await page.content();
 	parser.init(page);
 	const hrefs = await parser.getLinkUrls(rootUrl);
@@ -80,8 +83,8 @@ const doCrawl = async () => {
 const api = {
 	crawl: async rootUrl => {
 		urlsToCrawl.add(rootUrl);
-		const crawResult = await doCrawl();
-		return crawResult;
+		const crawlResult = await doCrawl();
+		return crawlResult;
 	}
 };
 
