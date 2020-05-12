@@ -1,6 +1,10 @@
 'use strict';
 
+const url = require('url');
 const puppeteer = require('puppeteer');
+
+const parser = require('./parser');
+const reporter = require('./reporter');
 
 // these must be lower case
 const unloadedResourceTypes = [
@@ -9,9 +13,8 @@ const unloadedResourceTypes = [
 	'font'
 ];
 
-let requestUrls = [];
-let responseUrls = [];
-let mainUrlStatus = 'NOT 200';
+let requestedUrls = [];
+let rootUrlStatus = 'NOT 200';
 
 const api = {
 	crawl: async rootUrl => {
@@ -24,41 +27,49 @@ const api = {
 		const page = await browser.newPage();
 		await page.setRequestInterception(true);
 
+		// event fires when browser loads another resource
 		page.on('request', request => {
-			requestUrls.push(request.url());
-			if(unloadedResourceTypes.includes(request.resourceType().toLowerCase())){
-				request.abort();
+			const lcResouceType = request.resourceType().toLowerCase();
+			if (unloadedResourceTypes.includes(lcResouceType)) {
+				request.abort(); // TODO: nicer to do this earlier in event loop?
 			}
 			else {
 				request.continue();
 			}
 		});
 
+		// event fires when browser fails to load another resource
 		page.on('requestfailed', request => {
 			// aborting requests (above) will result in failures
 		});
 
 		page.on('response', response => {
-			const request = response.request();
-			const url = request.url();
-			responseUrls.push(response.url());
-			const status = response.status();
-			if (url === rootUrl) {
-				mainUrlStatus = status;
+			const thisUrl = response.url();
+			let parsedUrl;
+			try {
+				parsedUrl = new URL(thisUrl);
+				requestedUrls.push(thisUrl);
+				console.log(`comapring ${parsedUrl.href} and ${rootUrl.href}`)
+				if (parsedUrl.href === rootUrl.href) {
+					rootUrlStatus = response.status();
+				}
+			} catch (error) {
+				// invalid URL found
+				console.warn(`invalid URL ${thisUrl}`);
 			}
 		});
 
 		await page.goto(rootUrl);
-		console.log('status for main url:', mainUrlStatus);
+		console.log('status for main url:', rootUrlStatus);
 		await page.content();
-		const hrefs = await page.$$eval('a', links => links.map(a => a.href));
-		console.log(hrefs);
+		parser.init(page);
+		const hrefs = await parser.getLinks();
+		console.log(requestedUrls);
 		await browser.close();
 
 		return {
-			mainUrlStatus: mainUrlStatus,
-			requestUrls: requestUrls.length,
-			responseUrls: responseUrls.length
+			rootUrlStatus: rootUrlStatus,
+			requestedUrls: requestedUrls.length
 		}
 	}
 

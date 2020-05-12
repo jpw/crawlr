@@ -2,7 +2,6 @@
 
 const initialiser = require('./modules/initialiser');
 const crawler = require('./modules/crawler');
-const parser = require('./modules/parser');
 const reporter = require('./modules/reporter');
 
 const main = async () => {
