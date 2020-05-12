@@ -5,7 +5,7 @@ const api = {
 	init: puppeteerPage => {
 		page = puppeteerPage;
 	},
-	getLinkUrls: async rootUrl => {
+	getLinkUrls: async surfedLocation => {
 		// We want A tags, with href attributes that are truthy i.e. not null
 		// https://github.com/puppeteer/puppeteer/blob/master/docs/api.md#pageevalselector-pagefunction-args
 		const hrefs = await page.evaluate(() => {
@@ -14,7 +14,7 @@ const api = {
 		});
 
 		// The browser kindly converts relative URLs to absolute, so finally check origins match
-		return hrefs.filter(href => href.startsWith(rootUrl.origin));
+		return hrefs.filter(href => href.startsWith(surfedLocation.origin));
 	}
 };
 
