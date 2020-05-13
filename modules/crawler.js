@@ -18,11 +18,12 @@ const doCrawl = async function* () {
 
 			const currentUrl = urlSetIterator.next().value;
 			console.log(`currentUrl: ${currentUrl}`)
-			const {requestedUrlStatus: rootUrlStatus, hrefs} = await client.surf(currentUrl);
+			const {requestedUrlStatus: rootUrlStatus, hrefs, cookies} = await client.surf(currentUrl);
 			console.log(`adding ${hrefs.length} lnks`)
 			hrefs.forEach(href => _urlsToCrawl.add(new URL(href)));
 
 			const progress = {
+				cookies: cookies,
 				crawledUrl: currentUrl,
 				crawledUrlStatus: rootUrlStatus,
 				//linksFound: hrefs,

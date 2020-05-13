@@ -72,11 +72,13 @@ const api = {
 		await page.goto(location);
 		await page.content();
 		parser.init(page);
-		const hrefs = await parser.getLinkUrls(location);
+		const hrefs = await parser.getMatchingOriginUrls(location);
+		const cookies = await parser.getCookies();
 
 		return {
 			requestedUrlStatus: requestedUrlStatus,
-			hrefs: hrefs
+			hrefs: hrefs,
+			cookies: cookies
 		}
 	}
 };

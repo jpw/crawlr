@@ -1,14 +1,15 @@
 'use strict';
 
-let page;
+let _page;
 const api = {
 	init: puppeteerPage => {
-		page = puppeteerPage;
+		_page = puppeteerPage;
 	},
-	getLinkUrls: async surfedLocation => {
+	getCookies: async () => await _page.cookies(),
+	getMatchingOriginUrls: async surfedLocation => {
 		// We want A tags, with href attributes that are truthy e.g. not null
 		// https://github.com/puppeteer/puppeteer/blob/master/docs/api.md#pageevalselector-pagefunction-args
-		const hrefs = await page.evaluate(() => {
+		const hrefs = await _page.evaluate(() => {
 			return Array.from(document.getElementsByTagName('a'), a => a.href)
 				.filter(href => Boolean(href))
 		});
