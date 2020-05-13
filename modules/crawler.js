@@ -31,7 +31,6 @@ const doCrawl = async function* () {
 				currentSetSize: _urlsToCrawl.size,
 				//currentSet: urlsToCrawl
 			};
-			//reporter.report(progress);
 
 			if (_done) {
 				return;
@@ -41,15 +40,13 @@ const doCrawl = async function* () {
 		}
 	} catch (error) {
 		console.error(error)
-	} finally {
-		// ?
 	}
 };
 
 const api = {
 	crawl: async ({rootUrl, maxDepth}) => {
 		let reports = [];
-		await client.openBrowser({
+		await client.openBrowser({ // TODO move this
 			headless: true,
 			slowMo: 200,
 		});

@@ -5,7 +5,7 @@ const puppeteer = require('puppeteer');
 const parser = require('./parser');
 
 // these must be lower case
-const resourceTypesToNotLoad = [
+const _resourceTypesToNotLoad = [
 	'image',
 	'media',
 	'font'
@@ -37,7 +37,7 @@ const api = {
 		// event fires when browser requests another resource
 		page.on('request', request => {
 			const lcResouceType = request.resourceType().toLowerCase();
-			if (resourceTypesToNotLoad.includes(lcResouceType)) {
+			if (_resourceTypesToNotLoad.includes(lcResouceType)) {
 				request.abort(); // TODO: nicer to do this earlier in event loop?
 			}
 			else {
@@ -74,6 +74,7 @@ const api = {
 		parser.init(page);
 		const hrefs = await parser.getMatchingOriginUrls(location);
 		const cookies = await parser.getCookies();
+		await page.close();
 
 		return {
 			requestedUrlStatus: requestedUrlStatus,
