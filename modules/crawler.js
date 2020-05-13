@@ -11,24 +11,26 @@ let _done = false;
 // a generator function that periodically yields a page parse report
 const doCrawl = async function* () {
 	try {
+		const urlSetIterator = _urlsToCrawl.values();
+
 		while (true) {
 			console.log(`currentSetSize: ${_urlsToCrawl.size}`)
-			const setIterator = _urlsToCrawl.values();
-			const currentUrl = setIterator.next().value;
+
+			const currentUrl = urlSetIterator.next().value;
 			console.log(`currentUrl: ${currentUrl}`)
 			const {requestedUrlStatus: rootUrlStatus, hrefs} = await client.surf(currentUrl);
 			console.log(`adding ${hrefs.length} lnks`)
-			hrefs.forEach(href => _urlsToCrawl.add(href));
+			hrefs.forEach(href => _urlsToCrawl.add(new URL(href)));
 
 			const progress = {
 				crawledUrl: currentUrl,
 				crawledUrlStatus: rootUrlStatus,
-				//			linksFound: hrefs,
+				//linksFound: hrefs,
 				links: hrefs.length,
 				currentSetSize: _urlsToCrawl.size,
 				//currentSet: urlsToCrawl
 			};
-			reporter.report(progress);
+			//reporter.report(progress);
 
 			if (_done) {
 				return;

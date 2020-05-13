@@ -18,7 +18,8 @@ const main = async () => {
 			rootUrl: parsedInputUrl,
 			maxDepth: 3
 		});
-		//reporter.report(crawlReport);
+		console.log(`crawl for ${parsedInputUrl} complete!`)
+		reporter.report(crawlReport);
 	} catch (error) {
 		reporter.report(error);
 	}
