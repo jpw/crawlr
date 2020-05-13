@@ -48,6 +48,10 @@ const doCrawl = async function* () {
 const api = {
 	crawl: async ({rootUrl, maxDepth}) => {
 		let reports = [];
+		await client.openBrowser({
+			headless: true,
+			slowMo: 200,
+		});
 		_urlsToCrawl.add(rootUrl);
 
 		// keep crawling until maxDepth is reached
@@ -64,6 +68,7 @@ const api = {
 		};
 
 		await crawlLoop(rootUrl);
+		await client.closeBrowser();
 		console.log(`crawler.crawl returning for ${rootUrl}`)
 		return reports;
 	}

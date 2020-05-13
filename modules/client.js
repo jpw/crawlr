@@ -1,5 +1,5 @@
 'use strict';
-
+//https://pptr.dev/#?product=Puppeteer&version=v3.0.4&show=api-class-puppeteer
 const puppeteer = require('puppeteer');
 
 const parser = require('./parser');
@@ -11,19 +11,24 @@ const resourceTypesToNotLoad = [
 	'font'
 ];
 
+let _browser;
+
 const api = {
+	openBrowser: async config => {
+		_browser = await puppeteer.launch(config);
+	},
+
+	closeBrowser: async () => {
+		await _browser.close(); // once closed it can no longer be used
+	},
+
 	surf: async location => {
-		// https://pptr.dev/#?product=Puppeteer&version=v3.0.4&show=api-class-puppeteer
-		const browser = await puppeteer.launch({
-			headless: true,
-			slowMo: 200,
-		});
-
 		let requestedUrlStatus;
-
 		let page;
+
 		try {
-			page = await browser.newPage();
+			page = await _browser.newPage();
+			// setRequestInterceptionenables request.abort, request.continue & request.respond methods
 			await page.setRequestInterception(true);
 		} catch (error) {
 			console.error(error)
@@ -68,8 +73,6 @@ const api = {
 		await page.content();
 		parser.init(page);
 		const hrefs = await parser.getLinkUrls(location);
-		// TODO: do we want a new browser instance per crawl, or per page?
-		await browser.close(); // once closed it can no longer be used
 
 		return {
 			requestedUrlStatus: requestedUrlStatus,
