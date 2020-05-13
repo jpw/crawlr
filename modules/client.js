@@ -11,21 +11,23 @@ const resourceTypesToNotLoad = [
 	'font'
 ];
 
-let browser;
-
 const api = {
 	surf: async location => {
-		if (!browser) {
-			// https://pptr.dev/#?product=Puppeteer&version=v3.0.4&show=api-class-puppeteer
-			browser = await puppeteer.launch({
-				headless: true,
-				slowMo: 200,
-			});
-		}
+		// https://pptr.dev/#?product=Puppeteer&version=v3.0.4&show=api-class-puppeteer
+		const browser = await puppeteer.launch({
+			headless: true,
+			slowMo: 200,
+		});
 
 		let requestedUrlStatus;
-		const page = await browser.newPage();
-		await page.setRequestInterception(true);
+
+		let page;
+		try {
+			page = await browser.newPage();
+			await page.setRequestInterception(true);
+		} catch (error) {
+			console.error(error)
+		}
 
 		// event fires when browser requests another resource
 		page.on('request', request => {
@@ -66,7 +68,8 @@ const api = {
 		await page.content();
 		parser.init(page);
 		const hrefs = await parser.getLinkUrls(location);
-		await browser.close();
+		// TODO: do we want a new browser instance per crawl, or per page?
+		await browser.close(); // once closed it can no longer be used
 
 		return {
 			requestedUrlStatus: requestedUrlStatus,

@@ -14,8 +14,11 @@ const main = async () => {
 	}
 
 	try {
-		const crawlReport = await crawler.crawl(parsedInputUrl);
-		reporter.report(crawlReport);
+		const crawlReport = await crawler.crawl({
+			rootUrl: parsedInputUrl,
+			maxDepth: 3
+		});
+		//reporter.report(crawlReport);
 	} catch (error) {
 		reporter.report(error);
 	}
