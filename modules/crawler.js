@@ -6,6 +6,7 @@ const client = require('./client');
 const reporter = require('./reporter');
 
 let _urlsToCrawl = new Set();
+let _allCookies = new Map();
 let _done = false;
 
 // a generator function that periodically yields a page parse report
@@ -19,17 +20,15 @@ const doCrawl = async function* () {
 			const currentUrl = urlSetIterator.next().value;
 			console.log(`currentUrl: ${currentUrl}`)
 			const {requestedUrlStatus: rootUrlStatus, hrefs, cookies} = await client.surf(currentUrl);
-			console.log(`adding ${hrefs.length} lnks`)
 			hrefs.forEach(href => _urlsToCrawl.add(new URL(href)));
+			cookies.forEach(cookie => _allCookies.set(cookie.name, cookie.domain));
 
 			const progress = {
 				cookies: cookies,
 				crawledUrl: currentUrl,
 				crawledUrlStatus: rootUrlStatus,
-				//linksFound: hrefs,
 				links: hrefs.length,
 				currentSetSize: _urlsToCrawl.size,
-				//currentSet: urlsToCrawl
 			};
 
 			if (_done) {
@@ -68,6 +67,7 @@ const api = {
 		await crawlLoop(rootUrl);
 		await client.closeBrowser();
 		console.log(`crawler.crawl returning for ${rootUrl}`)
+		console.log(_allCookies)
 		return reports;
 	}
 };

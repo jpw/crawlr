@@ -28,7 +28,7 @@ const api = {
 
 		try {
 			page = await _browser.newPage();
-			// setRequestInterceptionenables request.abort, request.continue & request.respond methods
+			// setRequestInterception enables request.abort, request.continue & request.respond methods
 			await page.setRequestInterception(true);
 		} catch (error) {
 			console.error(error)
@@ -58,7 +58,7 @@ const api = {
 				parsedUrl = new URL(thisUrl);
 				const status = response.status();
 				if (parsedUrl.href === location.href
-						&& (status < 300 || status >= 400)
+						&& (status < 300 || status >= 400) // TODO reconsider this
 					)
 				{
 					requestedUrlStatus = status;

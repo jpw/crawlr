@@ -1,5 +1,10 @@
 'use strict';
 
+// TODO handle this case:
+//currentUrl: https://www.amazon.com/gcx/-/gfhz/connections/list?ref_=nav_ListFlyout_fafgift
+//Error: Execution context was destroyed, most likely because of a navigation.
+// yep, its a (JS?) redir to a login page
+
 let _page;
 const api = {
 	init: puppeteerPage => {
@@ -16,7 +21,10 @@ const api = {
 
 		// The browser kindly converts relative URLs to absolute, so
 		//  all we need to do to find crawl candidates is check the origins match
-		return hrefs.filter(href => href.startsWith(surfedLocation.origin));
+		//  TODO: need to toggle origin match, or domain match
+		return hrefs.filter(href => {
+			return typeof href.startsWith === 'function' && href.startsWith(surfedLocation.origin)
+		});
 	}
 };
 
