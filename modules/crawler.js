@@ -1,7 +1,5 @@
 'use strict';
 
-const url = require('url');
-
 const client = require('./client');
 const reporter = require('./reporter');
 
