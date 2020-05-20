@@ -1,16 +1,16 @@
 'use strict';
-//https://pptr.dev/#?product=Puppeteer&version=v3.0.4&show=api-class-puppeteer
+// https://pptr.dev/#?product=Puppeteer&version=v3.0.4&show=api-class-puppeteer
 const puppeteer = require('puppeteer');
 
 const parser = require('./parser');
 
 const interceptClientInitiatedRedirects = true;
 // these must be lower case
-const _resourceTypesToNotLoad = [
+const _resourceTypesToNotLoad = new Set([
 	'image',
 	'media',
 	'font'
-];
+]);
 
 let _browser;
 let _responseStatus;
@@ -42,7 +42,7 @@ const api = {
 		// event fires when browser requests another resource
 		page.on('request', request => {
 			const lcResourceType = request.resourceType().toLowerCase();
-			if (_resourceTypesToNotLoad.includes(lcResourceType)) {
+			if (_resourceTypesToNotLoad.has(lcResourceType)) {
 				request.abort();
 				return;
 			}
@@ -52,14 +52,13 @@ const api = {
 			//  away while we are trying to examine the DOM and errors get thrown, typically
 			//  "Error: Execution context was destroyed, most likely because of a navigation."
 			if (interceptClientInitiatedRedirects) {
-				const parsedReqUrl = new URL(request.url());
+				const parsedRequestUrl = new URL(request.url());
 				if (request.isNavigationRequest() &&
 					!statusCodeIsRedirect(_responseStatus) &&
 					request.frame() === page.mainFrame() &&
-					parsedReqUrl.href !== location.href)
-				{
-					console.warn(`*** status: ${_responseStatus} abort load of ${parsedReqUrl.href} from ${location.href}`);
-					//request.abort('aborted');
+					parsedRequestUrl.href !== location.href) {
+					console.warn(`*** status: ${_responseStatus} abort load of ${parsedRequestUrl.href} from ${location.href}`);
+					// request.abort('aborted');
 					request.continue(); // continue while we debug. i want to see a crash.
 					return;
 				}
@@ -82,10 +81,9 @@ const api = {
 			try {
 				parsedUrl = new URL(thisUrl);
 				const status = response.status();
-				if (parsedUrl.href === location.href
-						&& (status < 300 || status >= 400)
-					)
-				{
+				if (parsedUrl.href === location.href &&
+					(status < 300 || status >= 400)
+				) {
 					requestedUrlStatus = status;
 				}
 			} catch (error) {
@@ -105,7 +103,7 @@ const api = {
 			requestedUrlStatus: requestedUrlStatus,
 			hrefs: hrefs,
 			cookies: cookies
-		}
+		};
 	}
 };
 

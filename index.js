@@ -9,7 +9,7 @@ const main = async () => {
 	try {
 		parsedInputUrl = initialiser.getInputUrl();
 	} catch (error) {
-		reporter.report(error)
+		reporter.report(error);
 		process.exit(9); // 9 = Invalid Argument
 	}
 
@@ -18,7 +18,7 @@ const main = async () => {
 			rootUrl: parsedInputUrl,
 			maxDepth: initialiser.getMaxDepth()
 		});
-		console.log(`crawl for ${parsedInputUrl} complete!`)
+		console.log(`crawl for ${parsedInputUrl} complete!`);
 		//reporter.report(crawlReport);
 	} catch (error) {
 		reporter.report(error);
