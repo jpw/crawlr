@@ -64,8 +64,6 @@ const api = {
 					return;
 				}
 			}
-
-
 			request.continue();
 		});
 
