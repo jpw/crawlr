@@ -4,6 +4,7 @@ const puppeteer = require('puppeteer');
 
 const parser = require('./parser');
 
+const interceptClientInitiatedRedirects = true;
 // these must be lower case
 const _resourceTypesToNotLoad = [
 	'image',
@@ -12,6 +13,9 @@ const _resourceTypesToNotLoad = [
 ];
 
 let _browser;
+let _responseStatus;
+
+const statusCodeIsRedirect = status => status >= 300 && status <= 399;
 
 const api = {
 	openBrowser: async config => {
@@ -31,18 +35,38 @@ const api = {
 			// setRequestInterception enables request.abort, request.continue & request.respond methods
 			await page.setRequestInterception(true);
 		} catch (error) {
-			console.error(error)
+			console.error(error);
+			return; // as any error here is going to be fatal
 		}
 
 		// event fires when browser requests another resource
 		page.on('request', request => {
-			const lcResouceType = request.resourceType().toLowerCase();
-			if (_resourceTypesToNotLoad.includes(lcResouceType)) {
-				request.abort(); // TODO: nicer to do this earlier in event loop?
+			const lcResourceType = request.resourceType().toLowerCase();
+			if (_resourceTypesToNotLoad.includes(lcResourceType)) {
+				request.abort();
+				return;
 			}
-			else {
-				request.continue();
+
+			// If we do not intercept "client-initiated" redirects (e.g. history API manipulation,
+			//  location.href assignment in JS, META redirect tags) the browser will navigate
+			//  away while we are trying to examine the DOM and errors get thrown, typically
+			//  "Error: Execution context was destroyed, most likely because of a navigation."
+			if (interceptClientInitiatedRedirects) {
+				const parsedReqUrl = new URL(request.url());
+				if (request.isNavigationRequest() &&
+					!statusCodeIsRedirect(_responseStatus) &&
+					request.frame() === page.mainFrame() &&
+					parsedReqUrl.href !== location.href)
+				{
+					console.warn(`*** status: ${_responseStatus} abort load of ${parsedReqUrl.href} from ${location.href}`);
+					//request.abort('aborted');
+					request.continue(); // continue while we debug. i want to see a crash.
+					return;
+				}
 			}
+
+
+			request.continue();
 		});
 
 		// event fires when browser fails to load another resource
@@ -52,13 +76,16 @@ const api = {
 
 		// event fires when browser gets a request response
 		page.on('response', response => {
+			_responseStatus = response.status();
+			// following trying to give nicer reports on requested URLs
+			// maybe should lose it all
 			const thisUrl = response.url();
 			let parsedUrl;
 			try {
 				parsedUrl = new URL(thisUrl);
 				const status = response.status();
 				if (parsedUrl.href === location.href
-						&& (status < 300 || status >= 400) // TODO reconsider this
+						&& (status < 300 || status >= 400)
 					)
 				{
 					requestedUrlStatus = status;

@@ -16,10 +16,10 @@ const main = async () => {
 	try {
 		const crawlReport = await crawler.crawl({
 			rootUrl: parsedInputUrl,
-			maxDepth: 5
+			maxDepth: initialiser.getMaxDepth()
 		});
 		console.log(`crawl for ${parsedInputUrl} complete!`)
-		reporter.report(crawlReport);
+		//reporter.report(crawlReport);
 	} catch (error) {
 		reporter.report(error);
 	}
