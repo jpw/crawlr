@@ -5,20 +5,17 @@ const crawler = require('./modules/crawler');
 const reporter = require('./modules/reporter');
 
 const main = async () => {
-	let parsedInputUrl;
+	let parsedInputUrls;
 	try {
-		parsedInputUrl = initialiser.getInputUrl();
+		parsedInputUrls = initialiser.getInputUrls();
 	} catch (error) {
 		reporter.report(error);
 		process.exit(9); // 9 = Invalid Argument
 	}
 
 	try {
-		const crawlReport = await crawler.crawl({
-			rootUrl: parsedInputUrl,
-			maxDepth: initialiser.getMaxDepth()
-		});
-		console.log(`crawl for ${parsedInputUrl} complete!`);
+		const crawlReport = await crawler.crawl(parsedInputUrls, initialiser.getMaxDepth());
+		console.log(`crawl complete!`);
 		//reporter.report(crawlReport);
 	} catch (error) {
 		reporter.report(error);

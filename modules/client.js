@@ -82,7 +82,7 @@ const api = {
 				parsedUrl = new URL(thisUrl);
 				const status = response.status();
 				if (parsedUrl.href === location.href &&
-					(status < 300 || status >= 400)
+					!statusCodeIsRedirect(status)
 				) {
 					requestedUrlStatus = status;
 				}

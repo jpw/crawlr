@@ -1,5 +1,11 @@
 'use strict';
 
+/**
+ * Module that opens a browser, loads the initial ("root") URLs provided by the user,
+ * maintains URL & Cookie state, and returns when maxdepth is reached. Too much? :)
+ * @module crawler
+ */
+
 const client = require('./client');
 const reporter = require('./reporter');
 
@@ -41,13 +47,19 @@ const doCrawl = async function * () {
 };
 
 const api = {
-	crawl: async ({rootUrl, maxDepth}) => {
+	/**
+	 * Opens a web browser and commences crawling.
+	 * @param {Array<URL>} rootUrls - node URL module instances
+	 * @param {int} maxDepth - maximum number of URLs to crawl
+	 * @returns {Promise<Array>} reports - an array of reports, one per page
+	 */
+	crawl: async (rootUrls, maxDepth) => {
 		let reports = [];
 		await client.openBrowser({ // TODO move this
 			headless: true,
 			slowMo: 200
 		});
-		_urlsToCrawl.add(rootUrl);
+		_urlsToCrawl = new Set(rootUrls);
 
 		// keep crawling until maxDepth is reached
 		async function crawlLoop() {
@@ -62,9 +74,8 @@ const api = {
 			}
 		}
 
-		await crawlLoop(rootUrl);
+		await crawlLoop(rootUrls);
 		await client.closeBrowser();
-		console.log(`crawler.crawl returning for ${rootUrl}`);
 		console.log(_allCookies);
 		return reports;
 	}
