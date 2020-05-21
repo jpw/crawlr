@@ -18,9 +18,27 @@ let _allCookies = new Map();
 let _done = false;
 
 /**
- * Given a cookie, this function returns a suitable identifier.
+ * Iterates over doCrawl() until maxIterations reached.
+ * @param {int} maxIterations - maximum number of iterations
+ */
+const crawlUntilMaxDepth = async maxIterations => {
+	let reports = [];
+	let thisIterationCount = 0;
+	// uses "for await...of" to iterate over async iterable objects
+	for await (const report of doCrawl()) {
+		reports.push(report);
+		thisIterationCount++;
+		if (thisIterationCount === maxIterations) {
+			_done = true;
+		}
+	}
+	return reports;
+}
+
+/**
+ * Given a cookie, this function returns a unique identifier.
  * Cookies are scoped by domain, and named, (see RFC 6265) so hopefully a hash of domain and
- * cookie name will be suitable.
+ * cookie name will be suitable, e.g. for a database key.
  * @param {Cookie} cookie - a Puppeteer cookie module instance
  * @returns {string} identifier - an appropriately-scoped identifier for the cookie instance
  */
@@ -39,6 +57,9 @@ const doCrawl = async function * () {
 		const urlSetIterator = _urlsToCrawl.values();
 
 		while (true) {
+			if (_done) {
+				return;
+			}
 			console.log(`currentSetSize: ${_urlsToCrawl.size}`);
 
 			const currentUrl = urlSetIterator.next().value;
@@ -70,10 +91,6 @@ const doCrawl = async function * () {
 				currentSetSize: _urlsToCrawl.size
 			};
 
-			if (_done) {
-				return;
-			}
-
 			yield parseReport;
 		}
 	} catch (error) {
@@ -89,26 +106,13 @@ const api = {
 	 * @returns {Promise<Array>} reports - an array of reports, one per page
 	 */
 	crawl: async (rootUrls, maxDepth) => {
-		let reports = [];
 		await client.openBrowser({ // TODO move this
 			headless: true,
 			slowMo: 200
 		});
 		_urlsToCrawl = new Set(rootUrls);
 
-		async function crawlUntilMaxDepth() {
-			let count = 0;
-			// uses "for await...of" to iterate over async iterable objects
-			for await (const report of doCrawl()) {
-				reports.push(report);
-				count++;
-				if (count === maxDepth) {
-					_done = true;
-				}
-			}
-		}
-
-		await crawlUntilMaxDepth(rootUrls);
+		const reports = await crawlUntilMaxDepth(maxDepth);
 		await client.closeBrowser();
 		console.log(_allCookies);
 		return reports;
