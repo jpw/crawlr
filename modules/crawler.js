@@ -26,7 +26,7 @@ const getCookieIdentifier = cookie => {
 };
 
 /**
- * Takes URLs from _urlsToCrawl, parses the page, and periodically yields a
+ * Given a Set rootUrls, loads them, parses the page, and periodically yields a
  * page parse report, until maxIterations completed or the URL set is exhausted.
  * @param {Set<URL>} rootUrls - a Set of node URL module instances to start crawling from
  * @param {int} maxIterations - maximum number of URL instances to load & parse
