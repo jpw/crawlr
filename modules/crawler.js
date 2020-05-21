@@ -13,8 +13,6 @@ const crypto = require('crypto');
 const client = require('./client');
 const reporter = require('./reporter');
 
-let _urlsToCrawl = new Set();
-
 /**
  * Given a cookie, this function returns a unique identifier.
  * Cookies are scoped by domain, and named, (see RFC 6265) so hopefully a hash of domain and
@@ -30,25 +28,27 @@ const getCookieIdentifier = cookie => {
 /**
  * Takes URLs from _urlsToCrawl, parses the page, and periodically yields a
  * page parse report, until maxIterations completed or the URL set is exhausted.
- * @param {int} maxIterations - maximum number of pages to crawl
+ * @param {Set<URL>} rootUrls - a Set of node URL module instances to start crawling from
+ * @param {int} maxIterations - maximum number of URL instances to load & parse
  * @yields {Object} parseReport - the results from the crawled page
  */
-const crawlUntilMaxDepth = async function * (maxIterations) {
+const crawlUrlsUntilMaxDepth = async function * (rootUrls, maxIterations) {
 	try {
-		const urlSetIterator = _urlsToCrawl.values();
+		let urlsToCrawl = rootUrls;
+		const urlSetIterator = urlsToCrawl.values();
 		let iterations = 0;
 
 		while (iterations < maxIterations) {
-			console.log(`currentSetSize: ${_urlsToCrawl.size}`);
+			console.log(`currentSetSize: ${urlsToCrawl.size}`);
 
 			const currentUrl = urlSetIterator.next().value;
-			if (currentUrl === undefined) { // no more URLs
+			if (currentUrl === undefined) { // no more URLs, so finish crawling
 				return;
 			}
 
 			console.log(`currentUrl: ${currentUrl}`);
 			const {requestedUrlStatus: rootUrlStatus, hrefs, cookies} = await client.surf(currentUrl);
-			hrefs.forEach(href => {
+			for (const href of hrefs) {
 				let candidateUrl;
 				try {
 					candidateUrl = new URL(href);
@@ -57,16 +57,16 @@ const crawlUntilMaxDepth = async function * (maxIterations) {
 					return;
 				}
 				if (candidateUrl) {
-					_urlsToCrawl.add(candidateUrl);
+					urlsToCrawl.add(candidateUrl);
 				}
-			});
+			};
 
 			const parseReport = {
 				cookies: cookies,
 				crawledUrl: currentUrl,
 				crawledUrlStatus: rootUrlStatus,
 				links: hrefs.length,
-				currentSetSize: _urlsToCrawl.size
+				currentSetSize: urlsToCrawl.size
 			};
 
 			iterations++;
@@ -89,11 +89,10 @@ const api = {
 			headless: true,
 			slowMo: 200
 		});
-		_urlsToCrawl = new Set(rootUrls);
 
 		let reports = [];
 		// uses "for await...of" to iterate over async iterable objects
-		for await (const report of crawlUntilMaxDepth(maxDepth)) {
+		for await (const report of crawlUrlsUntilMaxDepth(rootUrls, maxDepth)) {
 			reports.push(report);
 		}
 
