@@ -20,7 +20,7 @@ const parseInput = input => {
 			console.warn('rejected invalid input URL');
 			console.error(error);
 		}
-		//  TODO: need to check origin/domain match
+		// TODO: check origin/domain match?
 		urls.add(thisUrl);
 	});
 
