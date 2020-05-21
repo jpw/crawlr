@@ -1,2 +1,4 @@
 # crawlr
-node-based web crawling with Puppeteer
+web crawling with node + Puppeteer
+
+a work in progress
