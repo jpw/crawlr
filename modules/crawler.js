@@ -52,14 +52,14 @@ const crawlUrlsUntilMaxDepth = async function * (rootUrls, maxIterations) {
 				let candidateUrl;
 				try {
 					candidateUrl = new URL(href);
-				} catch (error) {
+				} catch {
 					// bad URL input, ignore
 					return;
 				}
 				if (candidateUrl) {
 					urlsToCrawl.add(candidateUrl);
 				}
-			};
+			}
 
 			const parseReport = {
 				cookies: cookies,

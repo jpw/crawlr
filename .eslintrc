@@ -4,7 +4,7 @@
 		"@springernature/eslint-config/node",
 		"@springernature/eslint-config/jest"
 	],
-  "parserOptions": {
-    "ecmaVersion": 9
-  }
+	"parserOptions": {
+		"ecmaVersion": 10
+	}
 }
