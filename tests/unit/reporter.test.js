@@ -12,11 +12,10 @@ afterAll(() => {
 	console.log = oldLog;
 });
 
-
 describe('reporter', () => {
-	it('should call console.log', () => {
-		reporter.report('a test message');
-		expect(console.log).toBeCalled();
-
+	it('should call console.log with the supplied message', () => {
+		const message = 'a test message';
+		reporter.report(message);
+		expect(console.log).toBeCalledWith(message);
 	});
 });
