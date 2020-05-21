@@ -28,7 +28,7 @@ const parseInput = input => {
 };
 
 const api = {
-	getMaxDepth: () => 30,
+	getMaxDepth: () => 10,
 	getInputUrls: () => parseInput(inputUrls)
 };
 

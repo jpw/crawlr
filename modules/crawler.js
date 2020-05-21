@@ -13,7 +13,11 @@ let _urlsToCrawl = new Set();
 let _allCookies = new Map();
 let _done = false;
 
-// a generator function that periodically yields a page parse report
+/**
+ * doCrawl takes URLs from _urlsToCrawl, parses the page, and periodically yields a
+ * page parse report, until an external flag is set or the URL set is exhausted.
+ * @yields {Object} parseReport - the results from the crawled page
+ */
 const doCrawl = async function * () {
 	try {
 		const urlSetIterator = _urlsToCrawl.values();
@@ -22,12 +26,16 @@ const doCrawl = async function * () {
 			console.log(`currentSetSize: ${_urlsToCrawl.size}`);
 
 			const currentUrl = urlSetIterator.next().value;
+			if (currentUrl === undefined) { // no more URLs
+				return;
+			}
+
 			console.log(`currentUrl: ${currentUrl}`);
 			const {requestedUrlStatus: rootUrlStatus, hrefs, cookies} = await client.surf(currentUrl);
 			hrefs.forEach(href => _urlsToCrawl.add(new URL(href)));
 			cookies.forEach(cookie => _allCookies.set(cookie.name, cookie.domain));
 
-			const progress = {
+			const parseReport = {
 				cookies: cookies,
 				crawledUrl: currentUrl,
 				crawledUrlStatus: rootUrlStatus,
@@ -39,7 +47,7 @@ const doCrawl = async function * () {
 				return;
 			}
 
-			yield progress;
+			yield parseReport;
 		}
 	} catch (error) {
 		console.error(error);
@@ -61,8 +69,7 @@ const api = {
 		});
 		_urlsToCrawl = new Set(rootUrls);
 
-		// keep crawling until maxDepth is reached
-		async function crawlLoop() {
+		async function crawlUntilMaxDepth() {
 			let count = 0;
 			// uses "for await...of" to iterate over async iterable objects
 			for await (const report of doCrawl()) {
@@ -74,7 +81,7 @@ const api = {
 			}
 		}
 
-		await crawlLoop(rootUrls);
+		await crawlUntilMaxDepth(rootUrls);
 		await client.closeBrowser();
 		console.log(_allCookies);
 		return reports;
