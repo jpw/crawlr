@@ -1,5 +1,9 @@
 'use strict';
 
+const crypto = require('crypto');
+// It's possible for node to be built without crypto, which will throw on the above
+// https://nodejs.org/docs/latest-v12.x/api/crypto.html#crypto_determining_if_crypto_support_is_unavailable
+
 /**
  * Module that opens a browser, loads the initial ("root") URLs provided by the user,
  * maintains URL & Cookie state, and returns when maxdepth is reached. Too much? :)
@@ -12,6 +16,18 @@ const reporter = require('./reporter');
 let _urlsToCrawl = new Set();
 let _allCookies = new Map();
 let _done = false;
+
+/**
+ * Given a cookie, this function returns a suitable identifier.
+ * Cookies are scoped by domain, and named, (see RFC 6265) so hopefully a hash of domain and
+ * cookie name will be suitable.
+ * @param {Cookie} cookie - a Puppeteer cookie module instance
+ * @returns {string} identifier - an appropriately-scoped identifier for the cookie instance
+ */
+const getCookieIdentifier = cookie => {
+	const key = crypto.createHash('sha256').update(`${cookie.name}|${cookie.domain}`).digest('hex');
+	return key.toString();
+};
 
 /**
  * doCrawl takes URLs from _urlsToCrawl, parses the page, and periodically yields a
@@ -32,9 +48,20 @@ const doCrawl = async function * () {
 
 			console.log(`currentUrl: ${currentUrl}`);
 			const {requestedUrlStatus: rootUrlStatus, hrefs, cookies} = await client.surf(currentUrl);
-			hrefs.forEach(href => _urlsToCrawl.add(new URL(href)));
-			cookies.forEach(cookie => _allCookies.set(cookie.name, cookie.domain));
+			hrefs.forEach(href => {
+				let candidateUrl;
+				try {
+					candidateUrl = new URL(href);
+				} catch (error) {
+					// bad URL input, ignore
+					return;
+				}
+				if (candidateUrl) {
+					_urlsToCrawl.add(candidateUrl);
+				}
+			});
 
+			cookies.forEach(cookie => _allCookies.set(getCookieIdentifier(cookie), cookie));
 			const parseReport = {
 				cookies: cookies,
 				crawledUrl: currentUrl,
