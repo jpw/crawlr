@@ -2,7 +2,7 @@
   "name": "crawlr",
   "version": "0.0.1",
   "description": "puppeteer-based crawler",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "lint": "eslint .",
     "test": "jest --colors --coverage --passWithNoTests",
